@@ -1,3 +1,4 @@
+#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include <tlhelp32.h>
 #include <iostream>
@@ -6,7 +7,9 @@
 #include <string> 
 #include <comdef.h>
 #include <Wbemidl.h>
-#pragma comment(lib, "wbemuuid.lib")
+#pragma comment(lib, "wbemuuid.lib") 
+#include <fstream>
+#include <ctime>
 
 
 
@@ -29,16 +32,17 @@ bool isPythonRunning() {
 
     CloseHandle(hSnapshot);
     return false;
-}
+} 
+
+void logDetection(const std::wstring& scriptName, DWORD pid);
+
 
 bool isKeyloggerScriptRunning(const std::wstring& scriptName) {
     HRESULT hres;
 
-    // Initialize COM
     hres = CoInitializeEx(0, COINIT_MULTITHREADED);
     if (FAILED(hres)) return false;
 
-    // Set COM security
     hres = CoInitializeSecurity(NULL, -1, NULL, NULL,
         RPC_C_AUTHN_LEVEL_DEFAULT, RPC_C_IMP_LEVEL_IMPERSONATE,
         NULL, EOAC_NONE, NULL);
@@ -90,15 +94,25 @@ bool isKeyloggerScriptRunning(const std::wstring& scriptName) {
         HRESULT hr = pEnumerator->Next(WBEM_INFINITE, 1, &pclsObj, &uReturn);
         if (0 == uReturn) break;
 
-        VARIANT vtProp;
-        VariantInit(&vtProp);
+        VARIANT vtCmd, vtPid;
+        VariantInit(&vtCmd);
+        VariantInit(&vtPid);
 
-        hr = pclsObj->Get(L"CommandLine", 0, &vtProp, 0, 0);
-        if (SUCCEEDED(hr) && vtProp.vt == VT_BSTR) {
-            std::wstring cmdLine(vtProp.bstrVal);
+        hr = pclsObj->Get(L"CommandLine", 0, &vtCmd, 0, 0);
+        hr = pclsObj->Get(L"ProcessId", 0, &vtPid, 0, 0);
+
+        if (SUCCEEDED(hr) && vtCmd.vt == VT_BSTR && vtPid.vt == VT_I4) {
+            std::wstring cmdLine(vtCmd.bstrVal);
+            DWORD pid = vtPid.intVal;
+
             if (cmdLine.find(scriptName) != std::wstring::npos) {
                 std::wcout << L"[+] Found script in cmdline: " << cmdLine << std::endl;
-                VariantClear(&vtProp);
+
+                logDetection(scriptName, pid);
+
+
+                VariantClear(&vtCmd); 
+                VariantClear(&vtPid);
                 pclsObj->Release();
                 pEnumerator->Release();
                 pSvc->Release();
@@ -108,7 +122,7 @@ bool isKeyloggerScriptRunning(const std::wstring& scriptName) {
             }
         }
 
-        VariantClear(&vtProp);
+        VariantClear(&vtPid);
         pclsObj->Release();
     }
 
@@ -118,6 +132,23 @@ bool isKeyloggerScriptRunning(const std::wstring& scriptName) {
     CoUninitialize();
     return false;
 }
+
+void logDetection(const std::wstring& scriptName, DWORD pid) {
+    std::ofstream logFile("detection_log.txt", std::ios::app);
+
+    // current time
+    std::time_t now = std::time(nullptr);
+    char timeStr[100];
+    std::strftime(timeStr, sizeof(timeStr), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+
+    // log entry
+    logFile << "[" << timeStr << "] Detected "
+        << std::string(scriptName.begin(), scriptName.end())
+        << " (PID: " << pid << ")\n";
+
+    logFile.close();
+}
+
 
 
 
