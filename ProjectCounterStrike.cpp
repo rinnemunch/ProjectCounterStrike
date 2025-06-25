@@ -153,27 +153,22 @@ void killProcessByPid(DWORD pid) {
     HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (hProcess != NULL) {
         if (TerminateProcess(hProcess, 0)) {
-            std::wcout << L"[✔] Successfully killed process (PID: " << pid << L")" << std::endl;
+            std::wcout << L"Successfully killed process (PID: " << pid << L")" << std::endl;
         }
         else {
-            std::wcout << L"[X] Failed to kill process (PID: " << pid << L")" << std::endl;
+            std::wcout << L"Failed to kill process (PID: " << pid << L")" << std::endl;
         }
         CloseHandle(hProcess);
     }
     else {
-        std::wcout << L"[X] Could not open process for termination (PID: " << pid << L")" << std::endl;
+        std::wcout << L"Could not open process for termination (PID: " << pid << L")" << std::endl;
     }
 }
 
 int main() {
-    if (isKeyloggerScriptRunning(L"keylogger.py")) {
-        std::wcout << L"[ALERT] keylogger.py is active!" << std::endl;
-    }
-    else {
-        std::wcout << L"No keylogger.py detected." << std::endl;
-    }
-
+    isKeyloggerScriptRunning(L"keylogger.py");
     return 0;
 }
+
 
 
