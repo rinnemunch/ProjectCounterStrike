@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
+﻿#define _CRT_SECURE_NO_WARNINGS
 #include <windows.h>
 #include <tlhelp32.h>
 #include <iostream>
@@ -23,7 +23,7 @@ bool isPythonRunning() {
     if (Process32First(hSnapshot, &pe)) {
         do {
             if (_wcsicmp(pe.szExeFile, L"python.exe") == 0) {
-                std::wcout << L"[!] Found python.exe � PID: " << pe.th32ProcessID << std::endl;
+                std::wcout << L"[!] Found python.exe — PID: " << pe.th32ProcessID << std::endl;
                 CloseHandle(hSnapshot);
                 return true;
             }
@@ -149,8 +149,21 @@ void logDetection(const std::wstring& scriptName, DWORD pid) {
     logFile.close();
 }
 
-
-
+void killProcessByPid(DWORD pid) {
+    HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+    if (hProcess != NULL) {
+        if (TerminateProcess(hProcess, 0)) {
+            std::wcout << L"[✔] Successfully killed process (PID: " << pid << L")" << std::endl;
+        }
+        else {
+            std::wcout << L"[X] Failed to kill process (PID: " << pid << L")" << std::endl;
+        }
+        CloseHandle(hProcess);
+    }
+    else {
+        std::wcout << L"[X] Could not open process for termination (PID: " << pid << L")" << std::endl;
+    }
+}
 
 int main() {
     if (isKeyloggerScriptRunning(L"keylogger.py")) {
