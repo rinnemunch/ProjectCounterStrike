@@ -108,8 +108,8 @@ bool isKeyloggerScriptRunning(const std::wstring& scriptName) {
             if (cmdLine.find(scriptName) != std::wstring::npos) {
                 std::wcout << L"[+] Found script in cmdline: " << cmdLine << std::endl;
 
-                logDetection(scriptName, pid);
-
+                logDetection(scriptName, pid); 
+                killProcessByPid(pid);
 
                 VariantClear(&vtCmd); 
                 VariantClear(&vtPid);
