@@ -34,8 +34,8 @@ bool isPythonRunning() {
     return false;
 } 
 
-void logDetection(const std::wstring& scriptName, DWORD pid);
-
+void logDetection(const std::wstring& scriptName, DWORD pid); 
+void killProcessByPid(DWORD pid);
 
 bool isKeyloggerScriptRunning(const std::wstring& scriptName) {
     HRESULT hres;
